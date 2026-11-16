@@ -76,18 +76,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   Option A (Recommended): Host on newtritechnologies.com
                 </div>
                 <p className="text-xs text-slate-600">
-                  Download this single static <span className="font-mono">index.html</span> file and upload it into a <span className="font-mono">/certs/</span> folder on your <span className="font-mono">newtritechnologies.com</span> hosting. Then set <strong>Public App Base URL</strong> below to <span className="font-mono">https://newtritechnologies.com/certs</span>. Zero 403/404 errors, works 24/7 with no PC or PHP/MySQL needed!
+                  Download this single static <span className="font-mono">index.html</span> file and place it inside <span className="font-mono">newtri-certs/certs/index.html</span> on your hosting / Netlify Drop. Set <strong>Public App Base URL</strong> below to <span className="font-mono">https://newtritechnologies.com/certs</span>. <strong>Note:</strong> Whenever a certificate format is updated here, download this <span className="font-mono">index.html</span> again and re-drop <span className="font-mono">newtri-certs</span> onto Netlify so QR scans show the latest format.
                 </p>
                 <button
                   type="button"
                   onClick={() => {
                     downloadStandaloneVerifierHtml(settings);
-                    onNotify('Downloaded index.html for newtritechnologies.com/certs/');
+                    onNotify('Downloaded updated index.html for newtritechnologies.com/certs/');
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B2A5B] px-3 py-2 text-xs font-semibold text-white hover:bg-[#123a7d] cursor-pointer"
                 >
                   <Download className="h-3.5 w-3.5" />
-                  <span>Download index.html for newtritechnologies.com</span>
+                  <span>Download Updated index.html for newtritechnologies.com</span>
                 </button>
               </div>
 

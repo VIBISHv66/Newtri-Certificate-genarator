@@ -9,7 +9,7 @@ import {
   ParsedSheetRow,
 } from '../types';
 import { createCertificatesBatch } from '../services/certService';
-import { computeDuration, normalizeDate } from '../utils/format';
+import { computeDuration, normalizeCertType, normalizeDate } from '../utils/format';
 
 interface UploadSheetPanelProps {
   existingCerts: CombinedCertificate[];
@@ -75,11 +75,20 @@ export const UploadSheetPanel: React.FC<UploadSheetPanelProps> = ({
             normalized[cleanKey(k)] = r[k];
           }
           const start = normalizeDate(
-            pickVal(normalized, ['startdate', 'start', 'from', 'fromdate'])
+            pickVal(normalized, [
+              'startdate',
+              'start',
+              'from',
+              'fromdate',
+              'date',
+              'workshopdate',
+              'eventdate',
+            ])
           );
-          const end = normalizeDate(
+          const endRaw = normalizeDate(
             pickVal(normalized, ['enddate', 'end', 'to', 'todate'])
           );
+          const end = endRaw || start;
           const duration =
             pickVal(normalized, ['duration', 'period']) ||
             (start && end ? computeDuration(start, end) : '');
@@ -99,10 +108,18 @@ export const UploadSheetPanel: React.FC<UploadSheetPanelProps> = ({
               'college',
               'collegename',
               'institution',
+              'collegeinstitution',
+              'organization',
+              'department',
               'collegenamecity',
             ]),
             course: pickVal(normalized, [
               'course',
+              'workshop',
+              'workshoptitle',
+              'workshopname',
+              'topic',
+              'event',
               'programme',
               'program',
               'role',
@@ -174,23 +191,54 @@ export const UploadSheetPanel: React.FC<UploadSheetPanelProps> = ({
   };
 
   const handleDownloadSample = () => {
-    const sample = [
-      {
-        'Student Name': 'Bhargavi M',
-        College: 'Sasurie College of Engineering, Tiruppur',
-        Course: 'Full-Stack Web Development',
-        Type: 'Course',
-        Duration: '1 Month',
-        'Start Date': '2026-06-01',
-        'End Date': '2026-06-30',
-        Phone: '9344154195',
-        Email: 'mce.ece.bhargavi22@gmail.com',
-      },
-    ];
+    const sample =
+      defaultType === 'Workshop'
+        ? [
+            {
+              'Student Name': 'Rashika K',
+              College: 'Amrita Institute of Technology, Nagercoil',
+              'Workshop Title': 'Generative AI & Prompt Engineering',
+              Type: 'Workshop',
+              Duration: '1 Day',
+              'Start Date': '2026-11-16',
+              'End Date': '2026-11-16',
+              Phone: '9344154195',
+              Email: 'student@example.com',
+            },
+          ]
+        : [
+            {
+              'Student Name': 'Bhargavi M',
+              College: 'Sasurie College of Engineering, Tiruppur',
+              Course: 'Full-Stack Web Development',
+              Type: 'Course',
+              Duration: '1 Month',
+              'Start Date': '2026-06-01',
+              'End Date': '2026-06-30',
+              Phone: '9344154195',
+              Email: 'mce.ece.bhargavi22@gmail.com',
+            },
+            {
+              'Student Name': 'Rashika K',
+              College: 'Amrita Institute of Technology, Nagercoil',
+              Course: 'Generative AI Workshop',
+              Type: 'Workshop',
+              Duration: '1 Day',
+              'Start Date': '2026-11-16',
+              'End Date': '2026-11-16',
+              Phone: '9597471615',
+              Email: 'rashika@example.com',
+            },
+          ];
     const ws = XLSX.utils.json_to_sheet(sample);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Students');
-    XLSX.writeFile(wb, 'newtri_students_template.xlsx');
+    XLSX.writeFile(
+      wb,
+      defaultType === 'Workshop'
+        ? 'newtri_workshop_template.xlsx'
+        : 'newtri_students_template.xlsx'
+    );
   };
 
   const handleSingleCreate = async (e: React.FormEvent) => {
@@ -245,9 +293,11 @@ export const UploadSheetPanel: React.FC<UploadSheetPanelProps> = ({
     }
   };
 
-  const invalidRows = rows.filter(
-    (r) => !r.name.trim() || !r.college.trim() || !r.course.trim() || !r.start || !r.end
-  );
+  const invalidRows = rows.filter((r) => {
+    const resolvedType = normalizeCertType(r.type, defaultType);
+    const missingCollege = resolvedType !== 'Workshop' && !r.college.trim();
+    return !r.name.trim() || missingCollege || !r.course.trim() || !r.start || !(r.end || r.start);
+  });
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-6">
@@ -376,6 +426,12 @@ export const UploadSheetPanel: React.FC<UploadSheetPanelProps> = ({
         </button>
       </div>
 
+      {defaultType === 'Workshop' && (
+        <p className="mt-2.5 rounded-lg border border-blue-200 bg-blue-50/70 px-3 py-2 text-xs text-[#0B2A5B]">
+          <strong>Workshop Certificate of Participation mode:</strong> Uses the blue &amp; gold medal template with the student&rsquo;s name, workshop title, date, Kanyakumari stamp, and unique QR verification code from your Excel rows.
+        </p>
+      )}
+
       {/* Interactive Preview Table */}
       {rows.length > 0 && (
         <div className="mt-4 space-y-2">
@@ -444,11 +500,18 @@ export const UploadSheetPanel: React.FC<UploadSheetPanelProps> = ({
                       />
                     </td>
                     <td className="px-2.5 py-1.5">
-                      <input
-                        value={r.type || defaultType}
+                      <select
+                        value={r.type ? normalizeCertType(r.type, defaultType) : ''}
                         onChange={(e) => updatePreviewRow(idx, 'type', e.target.value)}
-                        className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
-                      />
+                        className="w-28 rounded border border-slate-300 bg-white px-1.5 py-1 text-xs"
+                      >
+                        <option value="">Default ({defaultType})</option>
+                        {CERT_TYPES.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-2.5 py-1.5">
                       <input
@@ -551,16 +614,17 @@ export const UploadSheetPanel: React.FC<UploadSheetPanelProps> = ({
                   />
                 </label>
                 <label className="block text-xs font-medium text-slate-600 sm:col-span-2">
-                  College / Institution *
+                  College / Institution {singleForm.type === 'Workshop' ? '(optional)' : '*'}
                   <input
-                    required
+                    required={singleForm.type !== 'Workshop'}
+                    placeholder={singleForm.type === 'Workshop' ? 'Optional for Workshop' : ''}
                     value={singleForm.college}
                     onChange={(e) => setSingleForm({ ...singleForm, college: e.target.value })}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
                   />
                 </label>
                 <label className="block text-xs font-medium text-slate-600 sm:col-span-2">
-                  Course / Programme *
+                  {singleForm.type === 'Workshop' ? 'Workshop Title *' : 'Course / Programme *'}
                   <input
                     required
                     value={singleForm.course}
@@ -585,19 +649,28 @@ export const UploadSheetPanel: React.FC<UploadSheetPanelProps> = ({
                 <label className="block text-xs font-medium text-slate-600">
                   Duration (optional)
                   <input
-                    placeholder="e.g. 1 Month"
+                    placeholder="e.g. 1 Day or 1 Month"
                     value={singleForm.duration}
                     onChange={(e) => setSingleForm({ ...singleForm, duration: e.target.value })}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
                   />
                 </label>
                 <label className="block text-xs font-medium text-slate-600">
-                  Start Date *
+                  {singleForm.type === 'Workshop' ? 'Workshop / Start Date *' : 'Start Date *'}
                   <input
                     type="date"
                     required
                     value={singleForm.start}
-                    onChange={(e) => setSingleForm({ ...singleForm, start: e.target.value })}
+                    onChange={(e) =>
+                      setSingleForm({
+                        ...singleForm,
+                        start: e.target.value,
+                        end:
+                          singleForm.type === 'Workshop' && !singleForm.end
+                            ? e.target.value
+                            : singleForm.end,
+                      })
+                    }
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
                   />
                 </label>

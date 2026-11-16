@@ -119,10 +119,17 @@ export function generateQrToken(): string {
 
 export function normalizeCertType(raw: string, fallback: CertType): CertType {
   const lower = String(raw || '').trim().toLowerCase();
-  if (lower === 'course') return 'Course';
+  if (lower === 'course' || lower === 'training') return 'Course';
   if (lower === 'value-added' || lower === 'value added' || lower === 'valueadded') return 'Value-added';
-  if (lower === 'internship') return 'Internship';
+  if (lower === 'internship' || lower === 'intern') return 'Internship';
+  if (lower === 'workshop' || lower === 'workshops' || lower === 'participation') return 'Workshop';
   return fallback;
+}
+
+export function formatWorkshopDatePhrase(startIso: string, endIso: string): string {
+  if (!startIso) return '';
+  if (!endIso || startIso === endIso) return `on ${fmtDate(startIso)}`;
+  return `from ${fmtDate(startIso)} to ${fmtDate(endIso)}`;
 }
 
 export function isPrivateDevOrigin(): boolean {

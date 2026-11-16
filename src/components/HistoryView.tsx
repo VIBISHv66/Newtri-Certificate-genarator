@@ -133,7 +133,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   const maskEmail = (e: string) => (e ? e.replace(/^(.).*(@.*)$/, '$1•••$2') : '—');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       {/* Search & Stats Header */}
       <section className="rounded-xl border border-slate-200 bg-white p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -274,7 +274,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                 key={s.key}
                 type="button"
                 onClick={() => openStudent(s.key)}
-                className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 text-left hover:border-[#1f6feb] transition-colors cursor-pointer"
+                className="card-interactive flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 text-left hover:border-[#1f6feb] cursor-pointer"
               >
                 <div>
                   <div className="flex items-start justify-between gap-3">
@@ -347,8 +347,14 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
 
       {/* Slide-over Student Timeline Drawer */}
       {activeStudent && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40">
-          <div className="h-full w-full max-w-lg overflow-y-auto bg-white shadow-2xl">
+        <div
+          className="fixed inset-0 z-50 flex justify-end bg-slate-950/40 backdrop-blur-[1px]"
+          onClick={() => setActiveKey(null)}
+        >
+          <div
+            className="animate-drawer-in h-full w-full max-w-lg overflow-y-auto bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="bg-[#0B2A5B] p-6 text-white">
               <div className="flex items-start justify-between gap-4">
                 <div>

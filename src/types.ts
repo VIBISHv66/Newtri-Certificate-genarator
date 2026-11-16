@@ -1,8 +1,8 @@
-export type CertType = 'Course' | 'Value-added' | 'Internship';
+export type CertType = 'Course' | 'Value-added' | 'Internship' | 'Workshop';
 export type CertStatus = 'pending' | 'approved' | 'revoked';
 export type PaymentMethod = 'Cash' | 'UPI' | 'Bank' | 'Card';
 
-export const CERT_TYPES: CertType[] = ['Course', 'Value-added', 'Internship'];
+export const CERT_TYPES: CertType[] = ['Course', 'Value-added', 'Internship', 'Workshop'];
 
 export const EXPENSE_CATEGORIES = [
   'Rent',

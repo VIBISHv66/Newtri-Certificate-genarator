@@ -49,7 +49,7 @@ service cloud.firestore {
       && data.studentName is string && data.studentName.size() >= 1 && data.studentName.size() <= 120
       && data.college is string && data.college.size() >= 1 && data.college.size() <= 160
       && data.course is string && data.course.size() >= 1 && data.course.size() <= 160
-      && data.certType in ['Course', 'Value-added', 'Internship']
+      && data.certType in ['Course', 'Value-added', 'Internship', 'Workshop']
       && data.duration is string && data.duration.size() <= 60
       && isValidDateStr(data.startDate)
       && isValidDateStr(data.endDate)

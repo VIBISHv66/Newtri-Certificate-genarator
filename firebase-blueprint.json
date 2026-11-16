@@ -32,7 +32,7 @@
         },
         "certType": {
           "type": "string",
-          "enum": ["Course", "Value-added", "Internship"]
+          "enum": ["Course", "Value-added", "Internship", "Workshop"]
         },
         "duration": {
           "type": "string",

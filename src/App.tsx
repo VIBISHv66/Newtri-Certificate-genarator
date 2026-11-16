@@ -217,6 +217,10 @@ export default function App() {
             void handleSignIn();
           }
         }}
+        onOpenAdminHistory={() => {
+          setAdminTab('history');
+          openAdminConsole();
+        }}
       />
     );
   }

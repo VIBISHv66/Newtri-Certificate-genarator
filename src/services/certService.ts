@@ -242,22 +242,23 @@ export async function createCertificatesBatch(
 
   rows.forEach((r, idx) => {
     const line = idx + 2;
+    const certType = normalizeCertType(r.type, defaultType);
     const name = r.name.trim().slice(0, 120);
-    const college = r.college.trim().slice(0, 160);
+    const collegeRaw = r.college.trim().slice(0, 160);
+    const college = collegeRaw || (certType === 'Workshop' ? 'Workshop Participant' : '');
     const course = r.course.trim().slice(0, 160);
     if (!name || !college || !course) {
-      errors.push(`Row ${line}: name, college, or course is empty`);
+      errors.push(`Row ${line}: name, college, or course/workshop title is empty`);
       return;
     }
 
     const startDate = r.start.trim();
-    const endDate = r.end.trim();
+    const endDate = (r.end.trim() || startDate).trim();
     if (!isValidIsoDate(startDate) || !isValidIsoDate(endDate) || endDate < startDate) {
       errors.push(`Row ${line} (${name}): start/end date is missing or invalid`);
       return;
     }
 
-    const certType = normalizeCertType(r.type, defaultType);
     const duration = (r.duration.trim() || computeDuration(startDate, endDate)).slice(0, 60);
     const phone = last10(r.phone);
     let email = r.email.trim().slice(0, 160);

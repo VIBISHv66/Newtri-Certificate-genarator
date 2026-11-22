@@ -10,7 +10,14 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
-import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
+import {
+  getRedirectResult,
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  User,
+} from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import {
   auth,
@@ -133,6 +140,21 @@ export default function App() {
   };
 
   useEffect(() => {
+    void getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          setViewMode('admin');
+        }
+      })
+      .catch((err) => {
+        const code = (err as { code?: string })?.code || '';
+        if (code === 'auth/unauthorized-domain') {
+          setAuthError(`UNAUTHORIZED_DOMAIN:${window.location.hostname}`);
+        } else if (code && code !== 'auth/null-user') {
+          setAuthError(err instanceof Error ? err.message : 'Google redirect sign-in failed.');
+        }
+      });
+
     const unsub = onAuthStateChanged(auth, (u) => {
       void evaluateUserAdmin(u);
     });
@@ -179,21 +201,41 @@ export default function App() {
     };
   }, [authReady, isAdmin]);
 
+  const handleGoogleRedirectSignIn = async () => {
+    setAuthError('');
+    try {
+      await signInWithRedirect(auth, googleProvider);
+    } catch (err) {
+      const code = (err as { code?: string })?.code || '';
+      if (code === 'auth/unauthorized-domain') {
+        setAuthError(`UNAUTHORIZED_DOMAIN:${window.location.hostname}`);
+      } else {
+        setAuthError(err instanceof Error ? err.message : 'Could not redirect to Google Sign-In.');
+      }
+    }
+  };
+
   const handleSignIn = async () => {
     setAuthError('');
+    const inIframe = typeof window !== 'undefined' && window.self !== window.top;
     try {
       await signInWithPopup(auth, googleProvider);
       setViewMode('admin');
     } catch (err) {
       const code = (err as { code?: string })?.code || '';
       if (code === 'auth/unauthorized-domain') {
-        setAuthError(
-          `UNAUTHORIZED_DOMAIN:${window.location.hostname}`
-        );
+        setAuthError(`UNAUTHORIZED_DOMAIN:${window.location.hostname}`);
+      } else if (
+        !inIframe &&
+        (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment')
+      ) {
+        await handleGoogleRedirectSignIn();
       } else if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
         setAuthError('Google sign-in popup was closed before finishing. Click Sign in with Google to try again.');
       } else if (code === 'auth/popup-blocked') {
-        setAuthError('Browser blocked the sign-in popup. Allow popups for this site and click Sign in with Google again.');
+        setAuthError(
+          'Browser blocked the Google sign-in popup inside this preview frame. Click "Open in Full Tab" below to sign in directly.'
+        );
       } else {
         setAuthError(err instanceof Error ? err.message : 'Sign-in could not be completed.');
       }
@@ -317,6 +359,7 @@ export default function App() {
         pendingVerificationUser={user && !user.emailVerified ? user : null}
         authError={authError}
         onGoogleSignIn={handleSignIn}
+        onGoogleRedirectSignIn={handleGoogleRedirectSignIn}
         onUserReloaded={handleUserReloaded}
         onSignOut={handleSignOut}
         onOpenStudentVerify={() => openPublicPreview('')}

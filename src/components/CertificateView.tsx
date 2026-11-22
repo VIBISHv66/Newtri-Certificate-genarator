@@ -238,20 +238,20 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
           : 'Certificate of Completion';
 
   return (
-    <div className="portal-backdrop min-h-screen text-slate-900">
-      {/* Top Bar (3-zone contract) */}
+    <div className="portal-backdrop min-h-screen overflow-x-hidden text-slate-900">
+      {/* Top Bar */}
       <header className="no-print sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-6 py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3.5 py-2.5 sm:gap-8 sm:px-6 sm:py-3">
           <a
             href="/?verify=1"
-            className="flex items-center gap-2.5 text-lg font-extrabold tracking-tight text-[#0B2A5B] whitespace-nowrap shrink-0"
+            className="flex min-w-0 items-center gap-2 sm:gap-2.5 text-sm sm:text-lg font-extrabold tracking-tight text-[#0B2A5B] shrink-0"
           >
             <img
               src="/assets/newtri-logo.png"
               alt={`${settings.companyName} logo`}
-              className="h-9 w-9 rounded-lg border border-slate-200 bg-white p-0.5 object-contain"
+              className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-lg border border-slate-200 bg-white p-0.5 object-contain"
             />
-            <span>{settings.companyName}</span>
+            <span className="truncate max-w-[140px] sm:max-w-none">{settings.companyName}</span>
           </a>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
@@ -286,40 +286,49 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
             </a>
           </nav>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <a
+              href={settings.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="md:hidden inline-flex min-h-[38px] items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0"
+            >
+              <span>Website</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
             <button
               type="button"
               onClick={onOpenAdmin}
-              className="btn-tactile px-4 py-2 text-xs font-semibold text-white bg-[#0B2A5B] rounded-lg hover:bg-[#123a7d] whitespace-nowrap shrink-0 cursor-pointer"
+              className="btn-tactile min-h-[38px] px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold text-white bg-[#0B2A5B] rounded-lg hover:bg-[#123a7d] whitespace-nowrap shrink-0 cursor-pointer"
             >
-              {isAdmin ? 'Admin Console' : 'Admin Sign In'}
+              {isAdmin ? 'Admin' : 'Admin Sign In'}
             </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <main className="mx-auto max-w-5xl px-3.5 py-5 sm:px-6 sm:py-8">
         {/* Verification Search Bar */}
-        <section className="no-print animate-fade-up mb-6 rounded-xl border border-slate-200/90 bg-white p-6 shadow-xs">
+        <section className="no-print animate-fade-up mb-5 sm:mb-6 rounded-xl border border-slate-200/90 bg-white p-4 sm:p-6 shadow-xs">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-3.5">
+            <div className="flex items-start gap-3">
               <img
                 src="/assets/newtri-logo.png"
                 alt={`${settings.companyName} logo`}
-                className="hidden sm:block h-12 w-12 shrink-0 rounded-xl border border-slate-200 bg-white p-1 object-contain"
+                className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-xl border border-slate-200 bg-white p-1 object-contain"
               />
-              <div>
-                <h1 className="text-xl font-bold tracking-tight text-[#0B2A5B]">
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#0B2A5B]">
                   Certificate Verification &amp; Download Portal
                 </h1>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-xs sm:text-sm text-slate-600">
                   Enter a Certificate ID (e.g. <span className="font-mono text-slate-800">NT-2026-A7K9M2</span>) or scan any {settings.companyName} QR code.
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <form onSubmit={handleLookupSubmit} className="flex flex-1 gap-2 md:w-auto">
-                <div className="relative flex-1 md:w-56">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              <form onSubmit={handleLookupSubmit} className="flex w-full gap-2 sm:w-auto">
+                <div className="relative min-w-0 flex-1 sm:w-52 md:w-56">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
@@ -327,12 +336,12 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
                     onChange={(e) => setLookupId(e.target.value)}
                     placeholder="Enter Certificate ID"
                     aria-label="Certificate ID"
-                    className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 font-mono text-sm uppercase text-slate-900 transition-colors focus:border-[#1f6feb] focus:outline-none focus:ring-2 focus:ring-[#1f6feb]/20"
+                    className="min-h-[42px] w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 font-mono text-sm uppercase text-slate-900 transition-colors focus:border-[#1f6feb] focus:outline-none focus:ring-2 focus:ring-[#1f6feb]/20"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="btn-tactile rounded-lg bg-[#1f6feb] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1558c0] whitespace-nowrap shrink-0 cursor-pointer"
+                  className="btn-tactile min-h-[42px] rounded-lg bg-[#1f6feb] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1558c0] whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   Verify ID
                 </button>
@@ -342,7 +351,7 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
                 type="button"
                 onClick={() => setShowHistory((v) => !v)}
                 aria-expanded={showHistory}
-                className={`btn-tactile inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-medium whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`btn-tactile min-h-[42px] inline-flex items-center justify-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-medium whitespace-nowrap shrink-0 cursor-pointer ${
                   showHistory
                     ? 'border-[#0B2A5B] bg-[#0B2A5B] text-white'
                     : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
@@ -534,15 +543,22 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
           <>
             {/* Verification Status Banner */}
             {cert.status === 'approved' && (
-              <section className="no-print mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <section className="no-print mb-5 sm:mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-emerald-700" />
-                    <div>
-                      <h2 className="text-base font-bold text-emerald-950">
-                        Verified Official Certificate — Issued by {settings.companyName}
-                      </h2>
-                      <p className="mt-1 text-sm text-emerald-900">
+                    <img
+                      src="/assets/newtri-logo.png"
+                      alt={`${settings.companyName} logo`}
+                      className="h-10 w-10 shrink-0 rounded-lg border border-emerald-200 bg-white p-1 object-contain"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
+                        <h2 className="text-sm sm:text-base font-bold text-emerald-950">
+                          Verified Official Certificate — Issued by {settings.companyName}
+                        </h2>
+                      </div>
+                      <p className="mt-1 text-xs sm:text-sm text-emerald-900 leading-relaxed">
                         This certificate confirms that <strong>{cert.studentName}</strong>
                         {cert.college && cert.college !== 'Workshop Participant'
                           ? ` (${cert.college})`
@@ -565,7 +581,7 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
                         </a>
                         .
                       </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-emerald-800 font-mono tabular-nums">
+                      <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] sm:text-xs text-emerald-800 font-mono tabular-nums">
                         <span>ID: {cert.certificateId}</span>
                         <span aria-hidden="true">·</span>
                         <span>Period: {fmtDate(cert.startDate)} – {fmtDate(cert.endDate)}</span>
@@ -579,7 +595,7 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
             )}
 
             {cert.status === 'pending' && (
-              <section className="no-print mb-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
+              <section className="no-print mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:p-5 text-amber-950">
                 <div className="flex items-start gap-3">
                   <Clock className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
                   <div>
@@ -593,7 +609,7 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
             )}
 
             {cert.status === 'revoked' && (
-              <section className="no-print mb-6 rounded-xl border border-red-200 bg-red-50 p-5 text-red-950">
+              <section className="no-print mb-6 rounded-xl border border-red-200 bg-red-50 p-4 sm:p-5 text-red-950">
                 <div className="flex items-start gap-3">
                   <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-700" />
                   <div>
@@ -608,25 +624,25 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
 
             {/* Download & Share Action Strip */}
             {cert.status === 'approved' && (
-              <div className="no-print animate-fade-up mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4">
-                <div className="text-sm text-slate-600">
+              <div className="no-print animate-fade-up mb-5 sm:mb-6 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5 sm:py-4">
+                <div className="text-xs sm:text-sm text-slate-600">
                   Save your PDF certificate below—scanning its QR code always opens this verification record.
                 </div>
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5">
                   <button
                     type="button"
                     onClick={handleDownloadPdf}
                     disabled={downloadingPdf}
-                    className="btn-tactile inline-flex items-center gap-2 rounded-lg bg-[#0B2A5B] px-4 py-2 text-sm font-semibold text-white hover:bg-[#123a7d] whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-60"
+                    className="btn-tactile min-h-[42px] inline-flex items-center justify-center gap-2 rounded-lg bg-[#0B2A5B] px-3.5 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#123a7d] whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-60"
                   >
                     <Download className="h-4 w-4" />
-                    <span>{downloadingPdf ? 'Generating PDF...' : 'Download PDF'}</span>
+                    <span>{downloadingPdf ? 'Generating...' : 'Download PDF'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="btn-tactile inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0 cursor-pointer"
+                    className="btn-tactile min-h-[42px] inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <Printer className="h-4 w-4" />
                     <span>Print</span>
@@ -635,7 +651,7 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
                   <button
                     type="button"
                     onClick={handleCopy}
-                    className="btn-tactile inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0 cursor-pointer"
+                    className="btn-tactile min-h-[42px] inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <Copy className="h-4 w-4" />
                     <span>{copied ? 'Link Copied' : 'Copy Link'}</span>
@@ -652,7 +668,7 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-tactile inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-sm font-medium text-emerald-900 hover:bg-emerald-100 whitespace-nowrap shrink-0"
+                    className="btn-tactile min-h-[42px] inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs sm:text-sm font-medium text-emerald-900 hover:bg-emerald-100 whitespace-nowrap shrink-0"
                   >
                     <Share2 className="h-4 w-4" />
                     <span>Share WhatsApp</span>
@@ -901,25 +917,25 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
             )}
 
             {cert.status === 'approved' && !isWorkshop && (
-              <div className="print-only-sheet animate-cert-reveal cert-stage-shadow mx-auto rounded-xl border border-slate-200 bg-[#fdfcf8] p-4 sm:p-8">
-                <div className="relative border-[3px] border-[#0B2A5B] p-2 sm:p-3">
-                  <div className="border border-[#B88C38] px-6 py-8 sm:px-12 sm:py-12">
+              <div className="print-only-sheet animate-cert-reveal cert-stage-shadow mx-auto rounded-xl border border-slate-200 bg-[#fdfcf8] p-3 sm:p-8">
+                <div className="relative border-[3px] border-[#0B2A5B] p-1.5 sm:p-3">
+                  <div className="border border-[#B88C38] px-4 py-6 sm:px-12 sm:py-12">
                     {/* Header */}
                     <div className="text-center">
                       <img
                         src="/assets/newtri-logo.png"
                         alt={`${settings.companyName} logo`}
-                        className="mx-auto mb-2.5 h-12 w-12 object-contain"
+                        className="mx-auto mb-2.5 h-11 w-11 sm:h-12 sm:w-12 object-contain"
                       />
-                      <div className="text-xl font-extrabold tracking-[0.18em] text-[#0B2A5B] sm:text-2xl">
+                      <div className="text-base font-extrabold tracking-[0.12em] text-[#0B2A5B] sm:text-2xl sm:tracking-[0.18em]">
                         {settings.companyName.toUpperCase()}
                       </div>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-[11px] sm:text-xs text-slate-500">
                         Karangad, Kanyakumari District, Tamil Nadu · {settings.websiteUrl.replace(/\/$/, '')}
                       </p>
-                      <div className="mx-auto my-5 h-px w-48 bg-slate-300" />
+                      <div className="mx-auto my-4 sm:my-5 h-px w-full max-w-[12rem] bg-slate-300" />
                       <h2
-                        className="text-2xl font-bold text-[#123a7d] sm:text-3xl"
+                        className="text-xl font-bold text-[#123a7d] sm:text-3xl"
                         style={{ fontFamily: 'var(--font-serif)' }}
                       >
                         {certHeading}
@@ -927,19 +943,19 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
                     </div>
 
                     {/* Recipient & Program Body */}
-                    <div className="mt-8 text-center">
-                      <p className="text-sm text-slate-600">This is to proudly certify that</p>
+                    <div className="mt-6 sm:mt-8 text-center">
+                      <p className="text-xs sm:text-sm text-slate-600">This is to proudly certify that</p>
                       <p
-                        className="mt-3 text-3xl font-bold italic text-slate-900 sm:text-4xl"
+                        className="mt-2.5 sm:mt-3 text-2xl font-bold italic text-slate-900 sm:text-4xl break-words"
                         style={{ fontFamily: 'var(--font-serif)' }}
                       >
                         {cert.studentName}
                       </p>
-                      <div className="mx-auto mt-2 h-0.5 w-64 bg-[#B88C38]" />
+                      <div className="mx-auto mt-2 h-0.5 w-full max-w-[16rem] bg-[#B88C38]" />
                       <p className="mt-3 text-sm font-medium text-slate-700 sm:text-base">
                         of {cert.college}
                       </p>
-                      <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-slate-700 sm:text-base">
+                      <p className="mx-auto mt-4 sm:mt-5 max-w-2xl text-xs sm:text-base leading-relaxed text-slate-700">
                         has successfully attended and completed the{' '}
                         <span className="font-semibold text-slate-900">{cert.certType}</span>{' '}
                         programme in{' '}
@@ -952,13 +968,13 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
                     </div>
 
                     {/* Footer: Metadata + QR Code + Signatory */}
-                    <div className="mt-12 grid grid-cols-1 items-end gap-8 border-t border-slate-200 pt-8 sm:grid-cols-3">
-                      <div className="text-left text-xs text-slate-600 space-y-1">
+                    <div className="mt-8 sm:mt-12 grid grid-cols-1 items-end gap-6 sm:gap-8 border-t border-slate-200 pt-6 sm:pt-8 sm:grid-cols-3">
+                      <div className="text-center sm:text-left text-xs text-slate-600 space-y-1">
                         <div className="font-mono font-semibold text-[#0B2A5B]">
                           ID: {cert.certificateId}
                         </div>
                         <div>Issued: {fmtDate(cert.issueDate)}</div>
-                        <div>
+                        <div className="break-all">
                           Verified at:{' '}
                           <span className="text-slate-800">{settings.websiteUrl.replace(/\/$/, '')}</span>
                         </div>
@@ -984,7 +1000,7 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
                       </div>
 
                       <div className="text-center sm:text-right">
-                        <div className="ml-auto w-44 border-b border-slate-400 pb-1 text-center">
+                        <div className="mx-auto sm:ml-auto sm:mr-0 w-44 border-b border-slate-400 pb-1 text-center">
                           <span
                             className="text-lg italic text-[#0B2A5B]"
                             style={{ fontFamily: 'var(--font-serif)' }}

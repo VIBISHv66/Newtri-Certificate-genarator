@@ -30,6 +30,26 @@ export function isHostedOnAuthorizedDomain(): boolean {
   );
 }
 
+export async function checkCurrentDomainAuthorized(): Promise<boolean> {
+  if (typeof window === 'undefined') return true;
+  const host = window.location.hostname.toLowerCase();
+  if (host === 'localhost' || host === '127.0.0.1') return true;
+  try {
+    const resp = await fetch(
+      `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=${encodeURIComponent(firebaseConfig.apiKey)}`
+    );
+    if (!resp.ok) return isHostedOnAuthorizedDomain();
+    const data = (await resp.json()) as { authorizedDomains?: string[] };
+    const list = Array.isArray(data.authorizedDomains) ? data.authorizedDomains : [];
+    return list.some((d) => {
+      const dom = d.toLowerCase().trim();
+      return host === dom || host.endsWith(`.${dom}`);
+    });
+  } catch {
+    return isHostedOnAuthorizedDomain();
+  }
+}
+
 // Keep standard Firebase Auth sign-in free of restricted Workspace scopes so login never triggers OAuth verification 403 blocks
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });

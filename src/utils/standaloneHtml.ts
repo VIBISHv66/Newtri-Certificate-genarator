@@ -13,12 +13,15 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- NEWTRI Verifier · Canva Workshop Format -->
   <link rel="icon" type="image/png" href="${WORKSHOP_ASSETS.logoSquareDataUrl}" />
+  <link rel="shortcut icon" type="image/png" href="${WORKSHOP_ASSETS.logoSquareDataUrl}" />
+  <link rel="apple-touch-icon" href="${WORKSHOP_ASSETS.logoSquareDataUrl}" />
   <title>${escapeHtml(companyName)} — Certificate Verification & Download</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,700&display=swap" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; }
+    html, body { overflow-x: hidden; }
     body {
       margin: 0; font-family: 'DM Sans', system-ui, sans-serif; color: #0f172a;
       background-color: #f8fafc;
@@ -31,19 +34,20 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
       min-height: 100vh;
     }
     header { position: sticky; top: 0; z-index: 30; background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(226,232,240,0.85); }
-    .top { max-width: 1080px; margin: 0 auto; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: #0B2A5B; text-decoration: none; white-space: nowrap; }
-    .brand-logo { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; padding: 2px; object-fit: contain; }
-    .nav-links { display: flex; align-items: center; gap: 18px; }
-    .site-link { font-size: 14px; font-weight: 600; color: #475569; text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; transition: color 150ms ease; white-space: nowrap; }
+    .top { max-width: 1080px; margin: 0 auto; padding: 10px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 800; font-size: 17px; color: #0B2A5B; text-decoration: none; min-width: 0; }
+    .brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .brand-logo { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; padding: 2px; object-fit: contain; }
+    .nav-links { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+    .site-link { font-size: 13px; font-weight: 600; color: #475569; text-decoration: none; background: none; border: 0; padding: 6px 2px; cursor: pointer; font-family: inherit; transition: color 150ms ease; white-space: nowrap; }
     .site-link:hover { color: #0B2A5B; }
-    main { max-width: 980px; margin: 28px auto; padding: 0 16px 64px; }
-    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; margin-bottom: 20px; animation: fadeUp 220ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+    main { max-width: 980px; margin: 22px auto; padding: 0 14px 56px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 18px; animation: fadeUp 220ms cubic-bezier(0.16, 1, 0.3, 1) both; }
     .search-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
     .search-form { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; max-width: 470px; align-items: center; }
-    input[type="text"] { flex: 1; min-width: 170px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; text-transform: uppercase; transition: border-color 150ms ease, box-shadow 150ms ease; }
+    input[type="text"] { flex: 1; min-width: 0; width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; text-transform: uppercase; transition: border-color 150ms ease, box-shadow 150ms ease; }
     input[type="text"]:focus { outline: none; border-color: #1f6feb; box-shadow: 0 0 0 3px rgba(31,111,235,0.16); }
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 15px; border-radius: 8px; border: 1px solid transparent; font: 600 13px 'DM Sans', sans-serif; cursor: pointer; text-decoration: none; transition: transform 140ms cubic-bezier(0.16,1,0.3,1), background-color 150ms ease, border-color 150ms ease; white-space: nowrap; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; padding: 9px 15px; border-radius: 8px; border: 1px solid transparent; font: 600 13px 'DM Sans', sans-serif; cursor: pointer; text-decoration: none; transition: transform 140ms cubic-bezier(0.16,1,0.3,1), background-color 150ms ease, border-color 150ms ease; white-space: nowrap; }
     .btn:active { transform: scale(0.98); }
     .btn-primary { background: #0B2A5B; color: #fff; }
     .btn-primary:hover { background: #123a7d; }
@@ -53,10 +57,13 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
     .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
     .btn-wa { background: #ecfdf5; color: #065f46; border-color: #6ee7b7; }
     .btn-wa:hover { background: #d1fae5; }
-    .banner-ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #064e3b; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; animation: fadeUp 220ms cubic-bezier(0.16,1,0.3,1) both; }
-    .banner-warn { background: #fffbeb; border: 1px solid #fde68a; color: #78350f; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; animation: fadeUp 220ms cubic-bezier(0.16,1,0.3,1) both; }
-    .banner-err { background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; animation: fadeUp 220ms cubic-bezier(0.16,1,0.3,1) both; }
-    .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+    .banner-ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #064e3b; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; animation: fadeUp 220ms cubic-bezier(0.16,1,0.3,1) both; }
+    .banner-row { display: flex; align-items: flex-start; gap: 12px; }
+    .banner-logo { width: 40px; height: 40px; flex-shrink: 0; border-radius: 8px; border: 1px solid #a7f3d0; background: #fff; padding: 3px; object-fit: contain; }
+    .banner-warn { background: #fffbeb; border: 1px solid #fde68a; color: #78350f; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; animation: fadeUp 220ms cubic-bezier(0.16,1,0.3,1) both; }
+    .banner-err { background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; animation: fadeUp 220ms cubic-bezier(0.16,1,0.3,1) both; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+    .action-btns { display: flex; flex-wrap: wrap; gap: 8px; }
     .sheet { background: #fdfcf8; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 20px 44px -22px rgba(11,42,91,0.22), 0 2px 6px -1px rgba(15,23,42,0.06); transition: box-shadow 220ms cubic-bezier(0.16,1,0.3,1); animation: certReveal 260ms cubic-bezier(0.16,1,0.3,1) both; }
     .sheet:hover { box-shadow: 0 24px 52px -20px rgba(11,42,91,0.28), 0 4px 10px -2px rgba(15,23,42,0.08); }
     .hist-item { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #f1f5f9; }
@@ -65,11 +72,11 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
     .frame-outer { border: 3px solid #0B2A5B; padding: 10px; }
     .frame-inner { border: 1px solid #B88C38; padding: 36px 28px; text-align: center; }
     .co { font-size: 22px; font-weight: 800; letter-spacing: 0.16em; color: #0B2A5B; }
-    .co-sub { margin-top: 4px; font-size: 12px; color: #64748b; }
-    .rule { width: 180px; height: 1px; background: #cbd5e1; margin: 18px auto; }
+    .co-sub { margin-top: 4px; font-size: 12px; color: #64748b; word-break: break-word; }
+    .rule { width: min(180px, 65%); height: 1px; background: #cbd5e1; margin: 18px auto; }
     .title { font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 700; color: #123a7d; margin: 0; }
-    .student { font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 36px; font-weight: 700; color: #0f172a; margin: 12px 0 6px; }
-    .name-rule { width: 240px; height: 2px; background: #B88C38; margin: 0 auto 12px; }
+    .student { font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 36px; font-weight: 700; color: #0f172a; margin: 12px 0 6px; word-break: break-word; }
+    .name-rule { width: min(240px, 78%); height: 2px; background: #B88C38; margin: 0 auto 12px; }
     .body-text { max-width: 660px; margin: 18px auto 0; font-size: 15px; line-height: 1.65; color: #334155; }
     .foot { margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: end; }
     .foot-left { text-align: left; font-size: 12px; color: #475569; line-height: 1.7; }
@@ -82,7 +89,30 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
     @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes certReveal { from { opacity: 0; transform: translateY(12px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
     @media (prefers-reduced-motion: reduce) { .card, .banner-ok, .banner-warn, .banner-err, .sheet { animation: none !important; transition: none !important; } }
-    @media (max-width: 680px) { .foot { grid-template-columns: 1fr; text-align: center; } .foot-left, .sig { text-align: center; } }
+    @media (max-width: 680px) {
+      .top { padding: 10px 12px; gap: 8px; }
+      .brand { font-size: 14px; gap: 7px; max-width: 52%; }
+      .brand-logo { width: 28px; height: 28px; }
+      .nav-links { gap: 10px; }
+      .site-link { font-size: 12px; }
+      main { margin: 16px auto; padding: 0 12px 48px; }
+      .card { padding: 16px; }
+      .search-form { width: 100%; max-width: 100%; }
+      .search-form input[type="text"] { flex: 1 1 100%; }
+      .search-form .btn { flex: 1; }
+      .actions { flex-direction: column; align-items: stretch; }
+      .action-btns { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+      .action-btns .btn:last-child { grid-column: 1 / -1; }
+      .sheet { padding: 12px; }
+      .frame-outer { padding: 6px; }
+      .frame-inner { padding: 24px 14px; }
+      .co { font-size: 16px; letter-spacing: 0.1em; }
+      .title { font-size: 22px; }
+      .student { font-size: 28px; }
+      .body-text { font-size: 13.5px; }
+      .foot { grid-template-columns: 1fr; text-align: center; margin-top: 26px; padding-top: 18px; gap: 16px; }
+      .foot-left, .sig { text-align: center; }
+    }
     @media print {
       @page { size: A4 landscape; margin: 8mm; }
       header, .no-print { display: none !important; }
@@ -407,6 +437,7 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
 
       const standardSheet =
         '<div class="sheet"><div class="frame-outer"><div class="frame-inner">' +
+          '<img src="' + WS_LOGO + '" alt="' + esc(COMPANY_NAME) + ' logo" style="width:46px;height:46px;object-fit:contain;margin:0 auto 10px;display:block" />' +
           '<div class="co">' + esc(COMPANY_NAME.toUpperCase()) + '</div>' +
           '<div class="co-sub">Karangad, Kanyakumari District, Tamil Nadu · ' + esc(WEBSITE_URL.replace(/\\/$/, '')) + '</div>' +
           '<div class="rule"></div>' +
@@ -425,12 +456,17 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
 
       root.innerHTML =
         '<div class="banner-ok no-print">' +
-          '<b>Verified Official Certificate — Issued by ' + esc(COMPANY_NAME) + '</b>' +
-          '<p style="margin:6px 0 0;font-size:14px">' + bannerSummary + '</p>' +
+          '<div class="banner-row">' +
+            '<img class="banner-logo" src="' + WS_LOGO + '" alt="' + esc(COMPANY_NAME) + ' logo" />' +
+            '<div>' +
+              '<b>Verified Official Certificate — Issued by ' + esc(COMPANY_NAME) + '</b>' +
+              '<p style="margin:6px 0 0;font-size:13.5px;line-height:1.55">' + bannerSummary + '</p>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
         '<div class="card no-print actions">' +
           '<span style="font-size:13px;color:#475569">Download your PDF certificate below—scanning its QR code always verifies this record.</span>' +
-          '<div style="display:flex;flex-wrap:wrap;gap:8px">' +
+          '<div class="action-btns">' +
             '<button class="btn btn-primary" id="dlBtn">Download PDF</button>' +
             '<button class="btn btn-outline" onclick="window.print()">Print</button>' +
             '<a class="btn btn-wa" target="_blank" href="https://wa.me/?text=' + encodeURIComponent(waMsg) + '">Share WhatsApp</a>' +

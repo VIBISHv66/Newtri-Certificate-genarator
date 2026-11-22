@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
@@ -11,6 +11,7 @@ import {
 import { User } from 'firebase/auth';
 import {
   BOOTSTRAP_ADMIN_EMAILS,
+  checkCurrentDomainAuthorized,
   FIREBASE_PROJECT_ID,
   isHostedOnAuthorizedDomain,
 } from '../firebase';
@@ -42,7 +43,20 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
   const [verifyingRefresh, setVerifyingRefresh] = useState(false);
   const [copiedHost, setCopiedHost] = useState(false);
 
-  const authorizedDomain = isHostedOnAuthorizedDomain();
+  const [authorizedDomain, setAuthorizedDomain] = useState<boolean>(() =>
+    isHostedOnAuthorizedDomain()
+  );
+
+  useEffect(() => {
+    let active = true;
+    void checkCurrentDomainAuthorized().then((ok) => {
+      if (active) setAuthorizedDomain(ok);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const inIframe = typeof window !== 'undefined' && window.self !== window.top;
   const unauthorizedHostFromErr = authError.startsWith('UNAUTHORIZED_DOMAIN:')
     ? authError.slice('UNAUTHORIZED_DOMAIN:'.length)
@@ -87,17 +101,17 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
   };
 
   return (
-    <div className="portal-backdrop min-h-screen flex flex-col text-slate-900">
+    <div className="portal-backdrop min-h-screen overflow-x-hidden flex flex-col text-slate-900">
       {/* Top Bar */}
       <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-6 py-3">
-          <div className="flex items-center gap-2.5 whitespace-nowrap shrink-0">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3.5 py-2.5 sm:gap-8 sm:px-6 sm:py-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-2.5 shrink-0">
             <img
               src="/assets/newtri-logo.png"
               alt={`${settings.companyName} logo`}
-              className="h-9 w-9 rounded-lg border border-slate-200 bg-white p-0.5 object-contain"
+              className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-lg border border-slate-200 bg-white p-0.5 object-contain"
             />
-            <span className="text-lg font-extrabold tracking-tight text-[#0B2A5B]">
+            <span className="truncate max-w-[140px] sm:max-w-none text-sm sm:text-lg font-extrabold tracking-tight text-[#0B2A5B]">
               {settings.companyName}
             </span>
           </div>
@@ -120,13 +134,22 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
             </a>
           </nav>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <a
+              href={settings.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="md:hidden inline-flex min-h-[38px] items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0"
+            >
+              <span>Website</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
             <button
               type="button"
               onClick={onOpenStudentVerify}
-              className="btn-tactile rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0 cursor-pointer"
+              className="btn-tactile min-h-[38px] rounded-lg border border-slate-300 bg-white px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0 cursor-pointer"
             >
-              Student Verify Portal
+              Verify Portal
             </button>
           </div>
         </div>

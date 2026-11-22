@@ -186,7 +186,11 @@ export default function App() {
       setViewMode('admin');
     } catch (err) {
       const code = (err as { code?: string })?.code || '';
-      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+      if (code === 'auth/unauthorized-domain') {
+        setAuthError(
+          `UNAUTHORIZED_DOMAIN:${window.location.hostname}`
+        );
+      } else if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
         setAuthError('Google sign-in popup was closed before finishing. Click Sign in with Google to try again.');
       } else if (code === 'auth/popup-blocked') {
         setAuthError('Browser blocked the sign-in popup. Allow popups for this site and click Sign in with Google again.');

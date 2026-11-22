@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
+  Check,
   CheckCircle2,
+  ChevronDown,
+  Copy,
+  ExternalLink,
   Eye,
   EyeOff,
   KeyRound,
@@ -10,7 +14,6 @@ import {
   LogIn,
   Mail,
   RefreshCw,
-  ShieldCheck,
 } from 'lucide-react';
 import {
   createUserWithEmailAndPassword,
@@ -19,7 +22,12 @@ import {
   signInWithEmailAndPassword,
   User,
 } from 'firebase/auth';
-import { auth, FIREBASE_PROJECT_ID } from '../firebase';
+import {
+  auth,
+  COMPANY_SENDER_EMAIL,
+  FIREBASE_PROJECT_ID,
+  isHostedOnAuthorizedDomain,
+} from '../firebase';
 import { PortalSettings } from '../types';
 
 interface AdminLoginViewProps {
@@ -89,14 +97,42 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
   onOpenStudentVerify,
 }) => {
   const [mode, setMode] = useState<'signin' | 'activate'>('signin');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(COMPANY_SENDER_EMAIL);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [signingInGoogle, setSigningInGoogle] = useState(false);
   const [formError, setFormError] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
   const [providerDisabled, setProviderDisabled] = useState(false);
   const [verifyingRefresh, setVerifyingRefresh] = useState(false);
+  const [copiedHost, setCopiedHost] = useState(false);
+  const authorizedDomain = isHostedOnAuthorizedDomain();
+  const unauthorizedHostFromErr = authError.startsWith('UNAUTHORIZED_DOMAIN:')
+    ? authError.slice('UNAUTHORIZED_DOMAIN:'.length)
+    : '';
+  const currentHost =
+    unauthorizedHostFromErr || (typeof window !== 'undefined' ? window.location.hostname : '');
+  const displayAuthError = unauthorizedHostFromErr ? '' : authError;
+
+  const handleCopyHost = () => {
+    if (!currentHost || typeof navigator === 'undefined' || !navigator.clipboard) return;
+    void navigator.clipboard.writeText(currentHost).then(() => {
+      setCopiedHost(true);
+      setTimeout(() => setCopiedHost(false), 2000);
+    });
+  };
+
+  const handleGoogleClick = async () => {
+    setSigningInGoogle(true);
+    setFormError('');
+    try {
+      await onGoogleSignIn();
+    } finally {
+      setSigningInGoogle(false);
+    }
+  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -334,57 +370,58 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
               </div>
             ) : (
               <div className="space-y-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900">
-                      {mode === 'signin' ? 'Admin Sign In' : 'First-Time Email Activation'}
-                    </h2>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {mode === 'signin'
-                        ? 'Enter your authorized NEWTRI Technologies admin credentials.'
-                        : 'Set up Email & Password login for your authorized admin email.'}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMode('signin');
-                        setFormError('');
-                        setInfoMsg('');
-                      }}
-                      className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors cursor-pointer ${
-                        mode === 'signin'
-                          ? 'bg-white text-slate-900 shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Sign In
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMode('activate');
-                        setFormError('');
-                        setInfoMsg('');
-                      }}
-                      className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors cursor-pointer ${
-                        mode === 'activate'
-                          ? 'bg-white text-slate-900 shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Activate
-                    </button>
-                  </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Admin Sign In</h2>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Sign in with your authorized Google account (<span className="font-mono">{COMPANY_SENDER_EMAIL}</span>) to manage certificates.
+                  </p>
                 </div>
 
-                {(formError || authError) && (
+                {(!authorizedDomain || Boolean(unauthorizedHostFromErr)) && currentHost && (
+                  <div className="space-y-2.5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-950">
+                    <div className="font-bold">
+                      Authorize Domain for Sign-In ({currentHost})
+                    </div>
+                    <p className="leading-relaxed text-amber-900">
+                      Firebase blocks sign-in on newly deployed domains until{' '}
+                      <span className="font-mono font-semibold">{currentHost}</span> is listed in{' '}
+                      <strong>Firebase Console → Authentication → Settings → Authorized domains</strong>.
+                      You can add it in 10 seconds below, or open your pre-authorized AI Studio App URL.
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-0.5">
+                      <a
+                        href={`https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/authentication/settings`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-tactile inline-flex items-center gap-1.5 rounded-lg bg-[#0B2A5B] px-3 py-1.5 font-semibold text-white hover:bg-[#123a7d]"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>Add Domain in Firebase Console</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={handleCopyHost}
+                        className="btn-tactile inline-flex items-center gap-1.5 rounded-lg border border-amber-400 bg-white px-3 py-1.5 font-semibold text-amber-950 hover:bg-amber-100 cursor-pointer"
+                      >
+                        {copiedHost ? <Check className="h-3.5 w-3.5 text-emerald-700" /> : <Copy className="h-3.5 w-3.5" />}
+                        <span>{copiedHost ? 'Copied Domain' : `Copy "${currentHost}"`}</span>
+                      </button>
+                      <a
+                        href="https://ais-pre-mobd3bswkuprp4tc4ir7af-860549325467.asia-northeast1.run.app/"
+                        className="btn-tactile inline-flex items-center gap-1.5 rounded-lg border border-amber-400 bg-white px-3 py-1.5 font-semibold text-amber-950 hover:bg-amber-100"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>Open AI Studio URL</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {(formError || displayAuthError) && (
                   <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3.5 text-xs text-red-900">
                     <div className="flex items-start gap-2">
                       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-700" />
-                      <span>{formError || authError}</span>
+                      <span>{formError || displayAuthError}</span>
                     </div>
                     {providerDisabled && (
                       <div className="pl-6 pt-1 text-[11px] text-red-800">
@@ -410,92 +447,165 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
                   </div>
                 )}
 
-                <form onSubmit={handleEmailSubmit} className="space-y-4">
-                  <label className="block text-xs font-semibold text-slate-700">
-                    Admin Email ID
-                    <div className="relative mt-1.5">
-                      <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        type="email"
-                        required
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="newtritechnologies@gmail.com"
-                        className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 transition-colors focus:border-[#1f6feb] focus:outline-none focus:ring-2 focus:ring-[#1f6feb]/20"
-                      />
-                    </div>
-                  </label>
-
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <label htmlFor="admin-password" className="text-xs font-semibold text-slate-700">
-                        Password
-                      </label>
-                      {mode === 'signin' && (
-                        <button
-                          type="button"
-                          onClick={handleResetPassword}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-[#1f6feb] hover:underline cursor-pointer"
-                        >
-                          <KeyRound className="h-3 w-3" />
-                          <span>Forgot password?</span>
-                        </button>
-                      )}
-                    </div>
-                    <div className="relative mt-1.5">
-                      <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        id="admin-password"
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Enter admin password"
-                        className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-900 transition-colors focus:border-[#1f6feb] focus:outline-none focus:ring-2 focus:ring-[#1f6feb]/20"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((v) => !v)}
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="btn-tactile flex w-full items-center justify-center gap-2 rounded-lg bg-[#0B2A5B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#123a7d] disabled:opacity-60 cursor-pointer"
-                  >
-                    <span>
-                      {submitting
-                        ? 'Please wait...'
-                        : mode === 'signin'
-                          ? 'Sign In to Admin Console'
-                          : 'Create & Verify Admin Account'}
-                    </span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </form>
-
-                <div className="relative flex items-center py-1">
-                  <div className="flex-grow border-t border-slate-200" />
-                  <span className="mx-3 text-xs text-slate-400">or</span>
-                  <div className="flex-grow border-t border-slate-200" />
-                </div>
-
+                {/* Primary Google Sign-In Button */}
                 <button
                   type="button"
-                  onClick={onGoogleSignIn}
-                  className="btn-tactile flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  disabled={signingInGoogle}
+                  onClick={() => void handleGoogleClick()}
+                  className="btn-tactile flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-xs hover:border-[#0B2A5B]/40 hover:bg-slate-50 disabled:opacity-60 cursor-pointer"
                 >
-                  <LogIn className="h-4 w-4" />
-                  <span>Sign in with Google</span>
+                  <svg className="h-5 w-5 shrink-0" viewBox="0 0 48 48" aria-hidden="true">
+                    <path
+                      fill="#EA4335"
+                      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+                    />
+                    <path
+                      fill="#4285F4"
+                      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+                    />
+                  </svg>
+                  <span>
+                    {signingInGoogle
+                      ? 'Signing in...'
+                      : `Sign in with Google (${COMPANY_SENDER_EMAIL})`}
+                  </span>
                 </button>
+
+                {/* Collapsible Secondary Email & Password Option */}
+                <div className="border-t border-slate-200 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailForm((v) => !v)}
+                    className="flex w-full items-center justify-between text-xs font-semibold text-slate-600 hover:text-[#0B2A5B] cursor-pointer"
+                  >
+                    <span>Email &amp; Password Sign-In (requires Email/Password enabled in Firebase)</span>
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${showEmailForm ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+
+                  {showEmailForm && (
+                    <div className="mt-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-500">
+                          {mode === 'signin' ? 'Sign in with password' : 'First-time password activation'}
+                        </span>
+                        <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMode('signin');
+                              setFormError('');
+                              setInfoMsg('');
+                            }}
+                            className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors cursor-pointer ${
+                              mode === 'signin'
+                                ? 'bg-white text-slate-900 shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            Sign In
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMode('activate');
+                              setFormError('');
+                              setInfoMsg('');
+                            }}
+                            className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors cursor-pointer ${
+                              mode === 'activate'
+                                ? 'bg-white text-slate-900 shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            Activate
+                          </button>
+                        </div>
+                      </div>
+
+                      <form onSubmit={handleEmailSubmit} className="space-y-4">
+                        <label className="block text-xs font-semibold text-slate-700">
+                          Admin Email ID
+                          <div className="relative mt-1.5">
+                            <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                              type="email"
+                              required
+                              autoComplete="email"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              placeholder="newtritechnologies@gmail.com"
+                              className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 transition-colors focus:border-[#1f6feb] focus:outline-none focus:ring-2 focus:ring-[#1f6feb]/20"
+                            />
+                          </div>
+                        </label>
+
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <label htmlFor="admin-password" className="text-xs font-semibold text-slate-700">
+                              Password
+                            </label>
+                            {mode === 'signin' && (
+                              <button
+                                type="button"
+                                onClick={handleResetPassword}
+                                className="inline-flex items-center gap-1 text-xs font-medium text-[#1f6feb] hover:underline cursor-pointer"
+                              >
+                                <KeyRound className="h-3 w-3" />
+                                <span>Forgot password?</span>
+                              </button>
+                            )}
+                          </div>
+                          <div className="relative mt-1.5">
+                            <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                              id="admin-password"
+                              type={showPassword ? 'text' : 'password'}
+                              required
+                              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              placeholder="Enter admin password"
+                              className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-900 transition-colors focus:border-[#1f6feb] focus:outline-none focus:ring-2 focus:ring-[#1f6feb]/20"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword((v) => !v)}
+                              aria-label={showPassword ? 'Hide password' : 'Show password'}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={submitting}
+                          className="btn-tactile flex w-full items-center justify-center gap-2 rounded-lg bg-[#0B2A5B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#123a7d] disabled:opacity-60 cursor-pointer"
+                        >
+                          <span>
+                            {submitting
+                              ? 'Please wait...'
+                              : mode === 'signin'
+                                ? 'Sign In with Password'
+                                : 'Create & Verify Admin Account'}
+                          </span>
+                          <ArrowRight className="h-4 w-4" />
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

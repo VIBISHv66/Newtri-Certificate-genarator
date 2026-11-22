@@ -14,8 +14,21 @@ export const db = firestoreDatabaseId ? getFirestore(app, firestoreDatabaseId) :
 export const auth = getAuth(app);
 
 export const FIREBASE_PROJECT_ID = firebaseConfig.projectId;
+export const FIREBASE_AUTH_DOMAIN = firebaseConfig.authDomain;
 export const COMPANY_SENDER_EMAIL = 'newtritechnologies@gmail.com';
 export const GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.send'];
+
+export function isHostedOnAuthorizedDomain(): boolean {
+  if (typeof window === 'undefined') return true;
+  const host = window.location.hostname.toLowerCase();
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host.endsWith('.run.app') ||
+    host.endsWith('.firebaseapp.com') ||
+    host.endsWith('.web.app')
+  );
+}
 
 // Keep standard Firebase Auth sign-in free of restricted Workspace scopes so login never triggers OAuth verification 403 blocks
 export const googleProvider = new GoogleAuthProvider();

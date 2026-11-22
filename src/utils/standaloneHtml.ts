@@ -12,6 +12,7 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- NEWTRI Verifier · Canva Workshop Format -->
+  <link rel="icon" type="image/png" href="${WORKSHOP_ASSETS.logoSquareDataUrl}" />
   <title>${escapeHtml(companyName)} — Certificate Verification & Download</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -30,8 +31,9 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
       min-height: 100vh;
     }
     header { position: sticky; top: 0; z-index: 30; background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(226,232,240,0.85); }
-    .top { max-width: 1080px; margin: 0 auto; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-    .brand { font-weight: 800; font-size: 18px; color: #0B2A5B; text-decoration: none; white-space: nowrap; }
+    .top { max-width: 1080px; margin: 0 auto; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: #0B2A5B; text-decoration: none; white-space: nowrap; }
+    .brand-logo { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; padding: 2px; object-fit: contain; }
     .nav-links { display: flex; align-items: center; gap: 18px; }
     .site-link { font-size: 14px; font-weight: 600; color: #475569; text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; transition: color 150ms ease; white-space: nowrap; }
     .site-link:hover { color: #0B2A5B; }
@@ -92,7 +94,10 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
 <body>
   <header class="no-print">
     <div class="top">
-      <a class="brand" href="?verify=1">${escapeHtml(companyName)}</a>
+      <a class="brand" href="?verify=1">
+        <img class="brand-logo" src="${WORKSHOP_ASSETS.logoSquareDataUrl}" alt="${escapeHtml(companyName)} logo" />
+        <span>${escapeHtml(companyName)}</span>
+      </a>
       <div class="nav-links">
         <button type="button" class="site-link" id="topHistBtn">History (<span id="histCountTop">0</span>)</button>
         <a class="site-link" href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">Official Website</a>
@@ -103,9 +108,12 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
   <main>
     <div class="card no-print">
       <div class="search-row">
-        <div>
-          <h1 style="margin:0;font-size:19px;color:#0B2A5B">Certificate Verification &amp; Download</h1>
-          <p style="margin:4px 0 0;font-size:13px;color:#64748b">Enter a Certificate ID or scan the QR code on any ${escapeHtml(companyName)} certificate.</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <img src="${WORKSHOP_ASSETS.logoSquareDataUrl}" alt="${escapeHtml(companyName)} logo" style="width:44px;height:44px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;padding:3px;object-fit:contain;flex-shrink:0" />
+          <div>
+            <h1 style="margin:0;font-size:19px;color:#0B2A5B">Certificate Verification &amp; Download</h1>
+            <p style="margin:4px 0 0;font-size:13px;color:#64748b">Enter a Certificate ID or scan the QR code on any ${escapeHtml(companyName)} certificate.</p>
+          </div>
         </div>
         <form class="search-form" id="lookupForm">
           <input type="text" id="lookupInput" placeholder="NT-2026-XXXXXX" required />
@@ -131,7 +139,9 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
       projectId: firebaseConfig.projectId,
       appId: firebaseConfig.appId,
     })};
-    const DATABASE_ID = ${JSON.stringify(firebaseConfig.firestoreDatabaseId)};
+    const DATABASE_ID = ${JSON.stringify(
+      (firebaseConfig as { firestoreDatabaseId?: string }).firestoreDatabaseId || ''
+    )};
     const COMPANY_NAME = ${JSON.stringify(companyName)};
     const WEBSITE_URL = ${JSON.stringify(websiteUrl)};
     const WS_MEDAL = ${JSON.stringify(WORKSHOP_ASSETS.medalDataUrl)};
@@ -141,7 +151,7 @@ export function downloadStandaloneVerifierHtml(settings: PortalSettings): void {
     const WS_SIG = ${JSON.stringify(WORKSHOP_ASSETS.signatureDataUrl)};
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app, DATABASE_ID);
+    const db = DATABASE_ID ? getFirestore(app, DATABASE_ID) : getFirestore(app);
     const root = document.getElementById('app');
     const historyPanel = document.getElementById('historyPanel');
     const HIST_KEY = 'newtri_verify_history_v1';

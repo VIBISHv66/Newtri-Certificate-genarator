@@ -3,7 +3,6 @@ import {
   Award,
   ExternalLink,
   History,
-  LogIn,
   LogOut,
   Menu,
   Receipt,
@@ -13,7 +12,13 @@ import {
 } from 'lucide-react';
 import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db, googleProvider, isBootstrapAdminEmail } from './firebase';
+import {
+  auth,
+  clearCompanyGmailSession,
+  db,
+  googleProvider,
+  isBootstrapAdminEmail,
+} from './firebase';
 import {
   DEFAULT_SETTINGS,
   fetchPortalSettings,
@@ -22,6 +27,7 @@ import {
 } from './services/certService';
 import { fetchServerCapabilities, ServerCapabilities } from './services/deliveryService';
 import { CombinedCertificate, ExpenseRecord, PortalSettings } from './types';
+import { AdminLoginView } from './components/AdminLoginView';
 import { CertificateView } from './components/CertificateView';
 import { CertificatesDashboard } from './components/CertificatesDashboard';
 import { HistoryView } from './components/HistoryView';
@@ -95,36 +101,40 @@ export default function App() {
     void fetchServerCapabilities().then(setCapabilities);
   }, []);
 
+  const evaluateUserAdmin = async (u: User | null) => {
+    setUser(u);
+    setAuthError('');
+    if (!u) {
+      setIsAdmin(false);
+      setAuthReady(true);
+      return;
+    }
+
+    if (!u.emailVerified) {
+      setIsAdmin(false);
+      setAuthReady(true);
+      return;
+    }
+
+    if (isBootstrapAdminEmail(u.email)) {
+      setIsAdmin(true);
+      setAuthReady(true);
+      return;
+    }
+
+    try {
+      const snap = await getDoc(doc(db, 'admins', u.uid));
+      setIsAdmin(snap.exists());
+    } catch {
+      setIsAdmin(false);
+    } finally {
+      setAuthReady(true);
+    }
+  };
+
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      setAuthError('');
-      if (!u) {
-        setIsAdmin(false);
-        setAuthReady(true);
-        return;
-      }
-
-      if (!u.emailVerified) {
-        setIsAdmin(false);
-        setAuthReady(true);
-        return;
-      }
-
-      if (isBootstrapAdminEmail(u.email)) {
-        setIsAdmin(true);
-        setAuthReady(true);
-        return;
-      }
-
-      try {
-        const snap = await getDoc(doc(db, 'admins', u.uid));
-        setIsAdmin(snap.exists());
-      } catch {
-        setIsAdmin(false);
-      } finally {
-        setAuthReady(true);
-      }
+    const unsub = onAuthStateChanged(auth, (u) => {
+      void evaluateUserAdmin(u);
     });
     return () => unsub();
   }, []);
@@ -175,14 +185,32 @@ export default function App() {
       await signInWithPopup(auth, googleProvider);
       setViewMode('admin');
     } catch (err) {
-      setAuthError(err instanceof Error ? err.message : 'Sign-in could not be completed.');
+      const code = (err as { code?: string })?.code || '';
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+        setAuthError('Google sign-in popup was closed before finishing. Click Sign in with Google to try again.');
+      } else if (code === 'auth/popup-blocked') {
+        setAuthError('Browser blocked the sign-in popup. Allow popups for this site and click Sign in with Google again.');
+      } else {
+        setAuthError(err instanceof Error ? err.message : 'Sign-in could not be completed.');
+      }
     }
   };
 
+  const handleUserReloaded = async () => {
+    if (!auth.currentUser) return;
+    await auth.currentUser.reload();
+    await auth.currentUser.getIdToken(true);
+    await evaluateUserAdmin(auth.currentUser);
+  };
+
   const handleSignOut = async () => {
+    clearCompanyGmailSession();
     await signOut(auth);
     setIsAdmin(false);
-    setViewMode('public');
+    setPreviewToken('');
+    setPreviewCertId('');
+    setViewMode('admin');
+    window.history.replaceState(null, '', '/');
   };
 
   const openPublicPreview = (token = '') => {
@@ -202,8 +230,8 @@ export default function App() {
     window.history.replaceState(null, '', '/');
   };
 
-  // Show Public Certificate View whenever a token/verify route is active OR unauthenticated user visits /
-  if (viewMode === 'public' || (authReady && !user && !previewToken)) {
+  // Public verification routes (?t=..., ?id=..., ?verify=1, /v/..., /verify) remain accessible without login
+  if (viewMode === 'public') {
     return (
       <CertificateView
         initialToken={previewToken}
@@ -211,11 +239,7 @@ export default function App() {
         settings={settings}
         isAdmin={isAdmin}
         onOpenAdmin={() => {
-          if (isAdmin) {
-            openAdminConsole();
-          } else {
-            void handleSignIn();
-          }
+          openAdminConsole();
         }}
         onOpenAdminHistory={() => {
           setAdminTab('history');
@@ -227,21 +251,34 @@ export default function App() {
 
   if (!authReady) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="portal-backdrop flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#0B2A5B]" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+            <img
+              src="/assets/newtri-logo.png"
+              alt="NEWTRI Technologies"
+              className="h-full w-full object-contain"
+            />
+          </div>
+          <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-[#0B2A5B]" />
           <p className="mt-3 text-sm font-medium text-slate-600">Loading NEWTRI Certificates...</p>
         </div>
       </div>
     );
   }
 
-  // Signed in with non-admin email
-  if (user && !isAdmin) {
+  // Signed in with an unauthorized email (after verification)
+  if (user && user.emailVerified && !isAdmin) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-        <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center space-y-4">
-          <ShieldCheck className="mx-auto h-10 w-10 text-amber-600" />
+      <div className="portal-backdrop flex min-h-screen items-center justify-center p-4">
+        <div className="animate-fade-up w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center space-y-4">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200 bg-white p-1.5 shadow-xs">
+            <img
+              src="/assets/newtri-logo.png"
+              alt={settings.companyName}
+              className="h-full w-full object-contain"
+            />
+          </div>
           <h1 className="text-lg font-bold text-slate-900">Admin Access Required</h1>
           <p className="text-sm text-slate-600">
             You are signed in as <span className="font-mono font-medium">{user.email}</span>, which is not authorized for the {settings.companyName} admin console.
@@ -251,16 +288,16 @@ export default function App() {
             <button
               type="button"
               onClick={() => openPublicPreview('')}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              className="btn-tactile rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
             >
-              Public Verify Portal
+              Student Verify Portal
             </button>
             <button
               type="button"
               onClick={handleSignOut}
-              className="rounded-lg bg-[#0B2A5B] px-4 py-2 text-xs font-semibold text-white hover:bg-[#123a7d] cursor-pointer"
+              className="btn-tactile rounded-lg bg-[#0B2A5B] px-4 py-2 text-xs font-semibold text-white hover:bg-[#123a7d] cursor-pointer"
             >
-              Sign Out
+              Sign Out &amp; Switch Account
             </button>
           </div>
         </div>
@@ -268,35 +305,18 @@ export default function App() {
     );
   }
 
-  // Fallback sign-in prompt if someone clicks Admin Console while signed out
-  if (!user) {
+  // Admin Login Page shown first at root URL when signed out or awaiting email verification
+  if (!user || !user.emailVerified) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-        <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center space-y-4">
-          <h1 className="text-lg font-bold text-[#0B2A5B]">{settings.companyName} Admin</h1>
-          <p className="text-sm text-slate-600">
-            Sign in with your authorized Google admin account to upload sheets, approve certificates, and send links via Email and WhatsApp.
-          </p>
-          {authError && <p className="text-xs font-medium text-red-700">{authError}</p>}
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={handleSignIn}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0B2A5B] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#123a7d] cursor-pointer"
-            >
-              <LogIn className="h-4 w-4" />
-              <span>Sign in with Google</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => openPublicPreview('')}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
-            >
-              Open Student Verification Portal
-            </button>
-          </div>
-        </div>
-      </div>
+      <AdminLoginView
+        settings={settings}
+        pendingVerificationUser={user && !user.emailVerified ? user : null}
+        authError={authError}
+        onGoogleSignIn={handleSignIn}
+        onUserReloaded={handleUserReloaded}
+        onSignOut={handleSignOut}
+        onOpenStudentVerify={() => openPublicPreview('')}
+      />
     );
   }
 
@@ -319,11 +339,18 @@ export default function App() {
       {/* Desktop Sidebar (240px) */}
       <aside className="hidden w-60 shrink-0 flex-col justify-between border-r border-slate-200 bg-white lg:flex">
         <div>
-          <div className="border-b border-slate-200 px-5 py-4">
-            <div className="text-base font-extrabold tracking-tight text-[#0B2A5B]">
-              {settings.companyName}
+          <div className="flex items-center gap-2.5 border-b border-slate-200 px-4 py-3.5">
+            <img
+              src="/assets/newtri-logo.png"
+              alt={`${settings.companyName} logo`}
+              className="h-9 w-9 shrink-0 rounded-lg border border-slate-200 bg-white p-0.5 object-contain"
+            />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-extrabold tracking-tight text-[#0B2A5B]">
+                {settings.companyName}
+              </div>
+              <div className="text-[11px] text-slate-500">Certificate Console</div>
             </div>
-            <div className="mt-0.5 text-xs text-slate-500">Certificate Console</div>
           </div>
 
           <nav className="p-3 space-y-1">
@@ -384,7 +411,14 @@ export default function App() {
           <aside className="relative z-10 flex w-64 flex-col justify-between bg-white p-4 shadow-xl">
             <div>
               <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <span className="font-bold text-[#0B2A5B]">{settings.companyName}</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <img
+                    src="/assets/newtri-logo.png"
+                    alt={`${settings.companyName} logo`}
+                    className="h-8 w-8 shrink-0 rounded-lg border border-slate-200 bg-white p-0.5 object-contain"
+                  />
+                  <span className="truncate font-bold text-[#0B2A5B]">{settings.companyName}</span>
+                </div>
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
@@ -451,6 +485,11 @@ export default function App() {
             >
               <Menu className="h-4 w-4" />
             </button>
+            <img
+              src="/assets/newtri-logo.png"
+              alt={settings.companyName}
+              className="h-7 w-7 rounded-md border border-slate-200 bg-white p-0.5 object-contain lg:hidden"
+            />
             <div className="flex items-center gap-2 text-sm">
               <span className="font-medium text-slate-500 hidden sm:inline">
                 {settings.companyName}

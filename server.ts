@@ -81,7 +81,15 @@ async function startServer() {
 
     if (!smtpUser || !smtpPass || smtpPass.includes('PUT_16_LETTER')) {
       res.status(400).json({
-        error: 'Server Gmail SMTP is not configured. Add SMTP_USER and SMTP_PASS in Secrets or use EmailJS.',
+        error:
+          'Server Gmail SMTP is not configured. Add SMTP_USER=newtritechnologies@gmail.com and a Gmail App Password in SMTP_PASS inside Secrets.',
+      });
+      return;
+    }
+
+    if (smtpUser.toLowerCase() !== 'newtritechnologies@gmail.com') {
+      res.status(400).json({
+        error: `SMTP_USER must be set to newtritechnologies@gmail.com (currently "${smtpUser}").`,
       });
       return;
     }

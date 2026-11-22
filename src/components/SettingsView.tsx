@@ -10,8 +10,13 @@ import {
   Save,
 } from 'lucide-react';
 import { PortalSettings } from '../types';
+import {
+  COMPANY_SENDER_EMAIL,
+  connectCompanyGmail,
+  getCompanyGmailSenderEmail,
+} from '../firebase';
 import { savePortalSettings } from '../services/certService';
-import { ServerCapabilities } from '../services/deliveryService';
+import { isCompanySmtpReady, ServerCapabilities } from '../services/deliveryService';
 import { isPrivateDevOrigin, resolveBaseUrl } from '../utils/format';
 import { downloadStandaloneVerifierHtml } from '../utils/standaloneHtml';
 
@@ -33,6 +38,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [publicBaseUrl, setPublicBaseUrl] = useState(settings.publicBaseUrl);
   const [whatsappGroupInvite, setWhatsappGroupInvite] = useState(settings.whatsappGroupInvite);
   const [saving, setSaving] = useState(false);
+  const [gmailSender, setGmailSender] = useState<string | null>(() => getCompanyGmailSenderEmail());
+  const [connectingGmail, setConnectingGmail] = useState(false);
 
   const effectiveOrigin = resolveBaseUrl(publicBaseUrl);
   const usingUnconfiguredDevPreview = isPrivateDevOrigin() && !publicBaseUrl.trim();
@@ -178,24 +185,61 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Delivery Channels Status */}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-5">
+        <div className="space-y-2.5 rounded-xl border border-slate-200 bg-white p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
             <Mail className="h-4 w-4 text-[#1f6feb]" />
-            <span>Email Delivery</span>
+            <span>Email Delivery ({COMPANY_SENDER_EMAIL})</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
-            <CheckCircle2 className="h-4 w-4" />
-            <span>
-              {capabilities.smtpConfigured
-                ? `Gmail SMTP active (${capabilities.smtpUser})`
-                : 'EmailJS pre-configured (service_jxbxnpg / template_uwp1xya)'}
-            </span>
-          </div>
-          <p className="text-xs text-slate-600">
-            {capabilities.smtpConfigured
-              ? 'Server-side Gmail SMTP is enabled via environment secrets.'
-              : 'Uses your EmailJS configuration automatically. To use direct Gmail SMTP instead, add SMTP_USER and your 16-letter Gmail App Password as SMTP_PASS in Secrets.'}
+          {gmailSender ? (
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Gmail connected — sends directly from {gmailSender}</span>
+            </div>
+          ) : isCompanySmtpReady(capabilities) ? (
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Server Gmail SMTP active ({capabilities.smtpUser})</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Connect {COMPANY_SENDER_EMAIL} to send student certificates</span>
+            </div>
+          )}
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Student emails send strictly from <strong>{COMPANY_SENDER_EMAIL}</strong>. For permanent 1-click batch sending without OAuth Testing blocks, create a 16-letter{' '}
+            <a
+              href="https://myaccount.google.com/apppasswords"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-[#1f6feb] underline"
+            >
+              Gmail App Password
+            </a>{' '}
+            on <strong>{COMPANY_SENDER_EMAIL}</strong> and add <span className="font-mono">SMTP_USER={COMPANY_SENDER_EMAIL}</span> and <span className="font-mono">SMTP_PASS</span> in AI Studio <strong>Secrets</strong> (or use <strong>Compose in Gmail</strong> inside Send Email anytime).
           </p>
+          {!gmailSender && !isCompanySmtpReady(capabilities) && (
+            <button
+              type="button"
+              disabled={connectingGmail}
+              onClick={async () => {
+                setConnectingGmail(true);
+                try {
+                  const res = await connectCompanyGmail();
+                  setGmailSender(res.email);
+                  onNotify(`Connected Gmail sender: ${res.email}`);
+                } catch (err) {
+                  onNotify(err instanceof Error ? err.message : 'Could not connect Gmail.');
+                } finally {
+                  setConnectingGmail(false);
+                }
+              }}
+              className="btn-tactile inline-flex items-center gap-1.5 rounded-lg bg-[#0B2A5B] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#123a7d] disabled:opacity-50 cursor-pointer"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              <span>{connectingGmail ? 'Connecting...' : `Connect ${COMPANY_SENDER_EMAIL} Gmail`}</span>
+            </button>
+          )}
         </div>
 
         <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-5">

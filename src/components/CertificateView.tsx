@@ -241,12 +241,17 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
     <div className="portal-backdrop min-h-screen text-slate-900">
       {/* Top Bar (3-zone contract) */}
       <header className="no-print sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-6 py-3.5">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-6 py-3">
           <a
-            href="/"
-            className="text-lg font-extrabold tracking-tight text-[#0B2A5B] whitespace-nowrap shrink-0"
+            href="/?verify=1"
+            className="flex items-center gap-2.5 text-lg font-extrabold tracking-tight text-[#0B2A5B] whitespace-nowrap shrink-0"
           >
-            {settings.companyName}
+            <img
+              src="/assets/newtri-logo.png"
+              alt={`${settings.companyName} logo`}
+              className="h-9 w-9 rounded-lg border border-slate-200 bg-white p-0.5 object-contain"
+            />
+            <span>{settings.companyName}</span>
           </a>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
@@ -297,13 +302,20 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
         {/* Verification Search Bar */}
         <section className="no-print animate-fade-up mb-6 rounded-xl border border-slate-200/90 bg-white p-6 shadow-xs">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-[#0B2A5B]">
-                Certificate Verification &amp; Download Portal
-              </h1>
-              <p className="mt-1 text-sm text-slate-600">
-                Enter a Certificate ID (e.g. <span className="font-mono text-slate-800">NT-2026-A7K9M2</span>) or scan any {settings.companyName} QR code.
-              </p>
+            <div className="flex items-start gap-3.5">
+              <img
+                src="/assets/newtri-logo.png"
+                alt={`${settings.companyName} logo`}
+                className="hidden sm:block h-12 w-12 shrink-0 rounded-xl border border-slate-200 bg-white p-1 object-contain"
+              />
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-[#0B2A5B]">
+                  Certificate Verification &amp; Download Portal
+                </h1>
+                <p className="mt-1 text-sm text-slate-600">
+                  Enter a Certificate ID (e.g. <span className="font-mono text-slate-800">NT-2026-A7K9M2</span>) or scan any {settings.companyName} QR code.
+                </p>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <form onSubmit={handleLookupSubmit} className="flex flex-1 gap-2 md:w-auto">
@@ -480,8 +492,12 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
         {!loading && !error && !cert && (
           <div className="animate-fade-up space-y-6">
             <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#0B2A5B]/6 text-[#0B2A5B]">
-                <ShieldCheck className="h-6 w-6" />
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xs">
+                <img
+                  src="/assets/newtri-logo.png"
+                  alt={`${settings.companyName} logo`}
+                  className="h-full w-full object-contain"
+                />
               </div>
               <h2 className="mt-4 text-lg font-bold text-slate-900">
                 Verify an Official {settings.companyName} Credential
@@ -890,6 +906,11 @@ export const CertificateView: React.FC<CertificateViewProps> = ({
                   <div className="border border-[#B88C38] px-6 py-8 sm:px-12 sm:py-12">
                     {/* Header */}
                     <div className="text-center">
+                      <img
+                        src="/assets/newtri-logo.png"
+                        alt={`${settings.companyName} logo`}
+                        className="mx-auto mb-2.5 h-12 w-12 object-contain"
+                      />
                       <div className="text-xl font-extrabold tracking-[0.18em] text-[#0B2A5B] sm:text-2xl">
                         {settings.companyName.toUpperCase()}
                       </div>

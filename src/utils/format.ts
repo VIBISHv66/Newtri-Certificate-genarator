@@ -137,8 +137,28 @@ export function isPrivateDevOrigin(): boolean {
   return window.location.origin.includes('ais-dev-');
 }
 
+export function cleanPublicUrl(raw?: string): string {
+  let trimmed = (raw || '').trim();
+  if (!trimmed) return '';
+  try {
+    const parsed = new URL(trimmed);
+    if (
+      (parsed.hostname === 'www.google.com' || parsed.hostname === 'google.com') &&
+      parsed.pathname === '/url'
+    ) {
+      const target = parsed.searchParams.get('q') || parsed.searchParams.get('url');
+      if (target && /^https?:\/\//i.test(target)) {
+        trimmed = target.trim();
+      }
+    }
+  } catch {
+    // Keep original string if incomplete while typing
+  }
+  return trimmed.replace(/\/+$/, '');
+}
+
 export function resolveBaseUrl(configured?: string): string {
-  const trimmed = (configured || '').trim().replace(/\/+$/, '');
+  const trimmed = cleanPublicUrl(configured);
   if (trimmed && /^https?:\/\//i.test(trimmed)) {
     return trimmed.replace('://ais-dev-', '://ais-pre-');
   }

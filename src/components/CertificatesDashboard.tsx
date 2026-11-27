@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   Check,
   CheckCircle2,
   Clock,
@@ -33,11 +34,13 @@ import {
   buildWhatsAppDirectUrl,
   downloadCsv,
   fmtDate,
+  isPrivateDevOrigin,
   last10,
 } from '../utils/format';
 import {
   deleteCertificates,
   resetContactsSendStatus,
+  savePortalSettings,
   updateCertificatesStatus,
   updateContactDelivery,
 } from '../services/certService';
@@ -53,6 +56,7 @@ interface CertificatesDashboardProps {
   settings: PortalSettings;
   capabilities: ServerCapabilities;
   adminEmail: string;
+  onSettingsUpdated: (next: PortalSettings) => void;
   onPreviewCertificate: (qrToken: string) => void;
   onNotify: (message: string) => void;
 }
@@ -63,6 +67,7 @@ export const CertificatesDashboard: React.FC<CertificatesDashboardProps> = ({
   settings,
   capabilities,
   adminEmail,
+  onSettingsUpdated,
   onPreviewCertificate,
   onNotify,
 }) => {
@@ -322,8 +327,68 @@ export const CertificatesDashboard: React.FC<CertificatesDashboardProps> = ({
     );
   }, [groupModalCerts, settings]);
 
+  const [switchingBaseUrl, setSwitchingBaseUrl] = useState(false);
+
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const configuredBase = (settings.publicBaseUrl || '').trim().replace(/\/+$/, '');
+  const isLocalHost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const showBaseMismatchAlert = (() => {
+    if (!configuredBase || !currentOrigin || isLocalHost || isPrivateDevOrigin()) return false;
+    try {
+      return new URL(configuredBase).origin !== currentOrigin;
+    } catch {
+      return true;
+    }
+  })();
+
+  const handleUseCurrentSiteUrl = async () => {
+    if (!currentOrigin) return;
+    setSwitchingBaseUrl(true);
+    try {
+      const next: PortalSettings = {
+        ...settings,
+        publicBaseUrl: currentOrigin,
+      };
+      await savePortalSettings(next);
+      onSettingsUpdated(next);
+      onNotify(`All student & QR links switched to ${currentOrigin}`);
+    } catch (err) {
+      onNotify(err instanceof Error ? err.message : 'Failed to update public URL.');
+    } finally {
+      setSwitchingBaseUrl(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {showBaseMismatchAlert && (
+        <section className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs sm:text-sm text-amber-950">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+              <div>
+                <div className="font-bold">
+                  Certificate Links Point to <span className="font-mono">{configuredBase}</span>
+                </div>
+                <p className="mt-0.5 text-xs text-amber-900 leading-relaxed">
+                  You are currently signed in on <span className="font-mono font-semibold">{currentOrigin}</span>, so clicking links pointing to <span className="font-mono">{configuredBase}</span> will show &ldquo;Page not found&rdquo; unless that old URL is hosted. Switch all QR codes and student links to your active site below.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={switchingBaseUrl}
+              onClick={() => void handleUseCurrentSiteUrl()}
+              className="btn-tactile shrink-0 rounded-lg bg-[#0B2A5B] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#123a7d] disabled:opacity-60 cursor-pointer"
+            >
+              {switchingBaseUrl ? 'Updating...' : `Use ${currentOrigin}`}
+            </button>
+          </div>
+        </section>
+      )}
+
       {/* KPI Strip */}
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <div className="rounded-xl border border-slate-200 bg-white p-4">
@@ -396,7 +461,7 @@ export const CertificatesDashboard: React.FC<CertificatesDashboardProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-[#0B2A5B] p-4 text-white">
           <div>
             <div className="text-sm font-semibold">
-              Batch Individual Dispatch ({capabilities.smtpConfigured ? 'Gmail SMTP' : 'EmailJS'})
+              Batch Individual Dispatch ({capabilities.smtpConfigured ? 'Gmail SMTP' : 'Gmail / Compose'})
             </div>
             <div className="mt-0.5 text-xs text-blue-100 tabular-nums">
               {counts.unsent} approved certificate(s) with email waiting · Select 50+ rows or send all filtered at once

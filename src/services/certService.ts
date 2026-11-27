@@ -23,6 +23,7 @@ import {
   StudentContact,
 } from '../types';
 import {
+  cleanPublicUrl,
   computeDuration,
   generateCertId,
   generateQrToken,
@@ -65,7 +66,7 @@ export async function savePortalSettings(settings: PortalSettings): Promise<void
     await setDoc(doc(db, 'settings', 'portal'), {
       companyName: settings.companyName.trim().slice(0, 80) || DEFAULT_SETTINGS.companyName,
       websiteUrl: settings.websiteUrl.trim().slice(0, 160) || DEFAULT_SETTINGS.websiteUrl,
-      publicBaseUrl: settings.publicBaseUrl.trim().replace(/\/+$/, '').slice(0, 200),
+      publicBaseUrl: cleanPublicUrl(settings.publicBaseUrl).slice(0, 200),
       whatsappGroupInvite: settings.whatsappGroupInvite.trim().slice(0, 200),
       updatedBy: uid,
       updatedAt: serverTimestamp(),

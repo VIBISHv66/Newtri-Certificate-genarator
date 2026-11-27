@@ -17,7 +17,7 @@ import {
 } from '../firebase';
 import { savePortalSettings } from '../services/certService';
 import { isCompanySmtpReady, ServerCapabilities } from '../services/deliveryService';
-import { isPrivateDevOrigin, resolveBaseUrl } from '../utils/format';
+import { cleanPublicUrl, isPrivateDevOrigin, resolveBaseUrl } from '../utils/format';
 import { downloadStandaloneVerifierHtml } from '../utils/standaloneHtml';
 
 interface SettingsViewProps {
@@ -48,10 +48,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     e.preventDefault();
     setSaving(true);
     try {
+      const cleanedBase = cleanPublicUrl(publicBaseUrl);
+      setPublicBaseUrl(cleanedBase);
       const next: PortalSettings = {
         companyName: companyName.trim() || 'NEWTRI Technologies',
         websiteUrl: websiteUrl.trim() || 'https://newtritechnologies.com/',
-        publicBaseUrl: publicBaseUrl.trim().replace(/\/+$/, ''),
+        publicBaseUrl: cleanedBase,
         whatsappGroupInvite: whatsappGroupInvite.trim(),
       };
       await savePortalSettings(next);
@@ -150,16 +152,40 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             />
           </label>
 
-          <label className="block text-xs font-medium text-slate-600">
-            Public App Base URL (e.g. https://newtritechnologies.com/certs or your deployed Cloud Run URL)
-            <input
-              type="url"
-              value={publicBaseUrl}
-              onChange={(e) => setPublicBaseUrl(e.target.value)}
-              placeholder="https://newtritechnologies.com/certs"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs text-slate-900"
-            />
-          </label>
+          <div className="space-y-2">
+            <label className="block text-xs font-medium text-slate-600">
+              Public App Base URL (your active Netlify URL like https://certificatesforstudents.netlify.app, or your deployed Cloud Run URL)
+              <input
+                type="url"
+                value={publicBaseUrl}
+                onChange={(e) => setPublicBaseUrl(cleanPublicUrl(e.target.value))}
+                placeholder="https://certificatesforstudents.netlify.app"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs text-slate-900"
+              />
+            </label>
+            {typeof window !== 'undefined' && (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPublicBaseUrl(window.location.origin.replace('://ais-dev-', '://ais-pre-'))
+                  }
+                  className="rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-[#0B2A5B] hover:bg-slate-100 cursor-pointer"
+                >
+                  Use Current Site URL ({window.location.origin.replace('://ais-dev-', '://ais-pre-')})
+                </button>
+                {publicBaseUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setPublicBaseUrl('')}
+                    className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Clear (Auto-detect)
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           <label className="block text-xs font-medium text-slate-600">
             Optional Student WhatsApp Group Invite Link

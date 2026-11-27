@@ -566,6 +566,7 @@ export default function App() {
               settings={settings}
               capabilities={capabilities}
               adminEmail={user.email || ''}
+              onSettingsUpdated={setSettings}
               onPreviewCertificate={(token) => openPublicPreview(token)}
               onNotify={notify}
             />
